@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Rol {
+  rol_id Int     @id @default(autoincrement())
+  nombre String  @unique
+
+  usuario_roles UsuarioRol[]
+}
+
+model Usuario {
+  usuario_id      Int     @id @default(autoincrement())
+  username        String  @unique
+  password_hash   String
+
+  nombre          String
+  apellido_paterno String?
+  apellido_materno String?
+  cedula_identidad String  @unique
+  nacionalidad     String?
+  genero           String?
+
+  licencia_numero   String? @unique
+  licencia_categoria String?
+
+  creado_en       DateTime @default(now())
+  foto_url        String?
+
+  roles           UsuarioRol[]
+  correos         CorreoUsuario[]
+  telefonos       TelefonoUsuario[]
+  asignaciones    Asignacion[]
+  conexiones      Conexion[]
+}
+
+model UsuarioRol {
+  usuario_id Int
+  rol_id     Int
+
+  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id])
+  rol     Rol     @relation(fields: [rol_id], references: [rol_id])
+
+  @@id([usuario_id, rol_id])
+}
+
+model CorreoUsuario {
+  correo_id Int    @id @default(autoincrement())
+  usuario_id Int
+  correo    String @unique
+
+  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model TelefonoUsuario {
+  telefono_id Int    @id @default(autoincrement())
+  usuario_id  Int
+  telefono    String
+
+  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model Vehiculo {
+  vehicle_id Int     @id @default(autoincrement())
+  placa      String  @unique
+  modelo     String?
+  anio       Int?
+
+  asignaciones Asignacion[]
+  conexiones   Conexion[]
+  ubicaciones  Ubicacion[]
+}
+
+model Asignacion {
+  asignacion_id Int      @id @default(autoincrement())
+  vehicle_id    Int
+  usuario_id    Int
+  fecha_inicio  DateTime @default(now())
+  fecha_fin     DateTime?
+
+  vehiculo Vehiculo @relation(fields: [vehicle_id], references: [vehicle_id])
+  usuario  Usuario  @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model Conexion {
+  connection_id  Int      @id @default(autoincrement())
+  vehicle_id     Int
+  usuario_id     Int
+  connected_at   DateTime @default(now())
+  disconnected_at DateTime?
+  estado         Boolean  @default(true)
+  ip             String?
+  user_agent     String?
+
+  vehiculo Vehiculo @relation(fields: [vehicle_id], references: [vehicle_id])
+  usuario  Usuario  @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model Ubicacion {
+  location_id   Int      @id @default(autoincrement())
+  vehicle_id    Int
+  fecha_hora    DateTime @default(now())
+  latitud      Float     
+  longitud     Float
+  velocidad_kmh Float?
+
+  vehiculo Vehiculo @relation(fields: [vehicle_id], references: [vehicle_id])
+}

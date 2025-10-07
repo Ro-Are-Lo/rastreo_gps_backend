@@ -1,0 +1,11 @@
+si a la hora de hacer o mandar al ubicaion  a la base de deatos y no funciona
+recuerda que prisma no es compatible con POSGIS haci que añadimos uno doigo extra al migration sql 
+
+LA ARQUITECURA DEL BACKEND ES EN CASACADA CON INFLUENCIA EN ARQUITECTURA LIMPIA
+
+USAR SIEMPRE LAS RECONEDACIONES DE NOMBRADO DE LO ARHIVOS DEACUERDOA  SU PORPOTITO
+
+LISTA DE LA NOMBREACION 
+
+    - auth. = autorizacion par JWT y MIDWALLE
+    
