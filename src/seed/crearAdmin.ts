@@ -10,7 +10,7 @@ async function main() {
   });
 
   // 2) Datos del usuario que queremos crear
-  const username = 'admin1';
+  const username = 'admin2';
   const plainPassword = '123456';
 
   // 3) Verificar si el usuario ya existe
@@ -45,13 +45,13 @@ async function main() {
     data: {
       username,
       password_hash: passwordHash,
-      nombre: 'Carlos',
-      apellido_paterno: 'Gomez',
+      nombre: 'Dante',
+      apellido_paterno: 'Plant',
       apellido_materno: 'Lopez',
-      cedula_identidad: '1000001',
+      cedula_identidad: '1000003',
       nacionalidad: 'Boliviana',
       genero: 'M',
-      licencia_numero: 'LIC001',
+      licencia_numero: 'LIC003',
       licencia_categoria: 'B',
       foto_url: ''
     }
