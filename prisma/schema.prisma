@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema: Radiotaxis ORM — versión final optimizada con índices
 
 datasource db {
   provider = "postgresql"
@@ -13,107 +9,220 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Rol {
-  rol_id Int     @id @default(autoincrement())
-  nombre String  @unique
+//
+// ────────────────────────────
+//  MODELOS BASE
+// ────────────────────────────
+//
 
-  usuario_roles UsuarioRol[]
+model Persona {
+  id                  Int       @id @default(autoincrement())
+  nombre              String
+  apellido_paterno    String?
+  apellido_materno    String?
+  genero              String?
+  foto_url            String?
+
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  // Relaciones
+  usuario    Usuario?   @relation("PersonaUsuario")
+  contactos  Contacto[]
+  documentos Documento[]
+
+  @@index([activo])
+  @@index([eliminado])
+}
+
+model Documento {
+  id                  Int       @id @default(autoincrement())
+  id_persona          Int
+  tipo_documento      String
+  nro_documento       String    @unique
+
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  persona Persona @relation(fields: [id_persona], references: [id])
+
+  @@index([id_persona])
+  @@index([tipo_documento])
 }
 
 model Usuario {
-  usuario_id      Int     @id @default(autoincrement())
-  username        String  @unique
-  password_hash   String
+  id                  Int       @id @default(autoincrement())
+  id_persona          Int       @unique
+  username            String    @unique
+  password_hash       String
 
-  nombre          String
-  apellido_paterno String?
-  apellido_materno String?
-  cedula_identidad String  @unique
-  nacionalidad     String?
-  genero           String?
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
 
-  licencia_numero   String? @unique
-  licencia_categoria String?
+  persona       Persona      @relation("PersonaUsuario", fields: [id_persona], references: [id])
+  roles         UsuarioRol[]
+  asignaciones  Asignacion[]
+  conexiones    Conexion[]
 
-  creado_en       DateTime @default(now())
-  foto_url        String?
+  @@index([id_persona])
+  @@index([activo])
+  @@index([eliminado])
+}
 
-  roles           UsuarioRol[]
-  correos         CorreoUsuario[]
-  telefonos       TelefonoUsuario[]
-  asignaciones    Asignacion[]
-  conexiones      Conexion[]
+model Contacto {
+  id                  Int       @id @default(autoincrement())
+  id_persona          Int
+  tipo                String
+  valor               String
+
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  persona Persona @relation(fields: [id_persona], references: [id])
+
+  @@index([id_persona])
+  @@index([tipo])
+}
+
+//
+// ────────────────────────────
+//  GESTIÓN DE ROLES
+// ────────────────────────────
+//
+
+model Rol {
+  id                  Int       @id @default(autoincrement())
+  nombre              String    @unique
+
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  usuarios UsuarioRol[]
+
+  @@index([activo])
+  @@index([eliminado])
 }
 
 model UsuarioRol {
-  usuario_id Int
-  rol_id     Int
+  id_usuario Int
+  id_rol     Int
 
-  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id])
-  rol     Rol     @relation(fields: [rol_id], references: [rol_id])
+  usuario Usuario @relation(fields: [id_usuario], references: [id])
+  rol     Rol     @relation(fields: [id_rol], references: [id])
 
-  @@id([usuario_id, rol_id])
+  @@id([id_usuario, id_rol])
+  @@index([id_usuario])
+  @@index([id_rol])
 }
 
-model CorreoUsuario {
-  correo_id Int    @id @default(autoincrement())
-  usuario_id Int
-  correo    String @unique
-
-  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id])
-}
-
-model TelefonoUsuario {
-  telefono_id Int    @id @default(autoincrement())
-  usuario_id  Int
-  telefono    String
-
-  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id])
-}
+//
+// ────────────────────────────
+//  VEHÍCULOS Y ASIGNACIONES
+// ────────────────────────────
+//
 
 model Vehiculo {
-  vehicle_id Int     @id @default(autoincrement())
-  placa      String  @unique
-  modelo     String?
-  anio       Int?
+  id                  Int       @id @default(autoincrement())
+  placa               String    @unique
+  modelo              String?
+  anio                Int?
+
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
 
   asignaciones Asignacion[]
   conexiones   Conexion[]
   ubicaciones  Ubicacion[]
+
+  @@index([activo])
+  @@index([eliminado])
 }
 
 model Asignacion {
-  asignacion_id Int      @id @default(autoincrement())
-  vehicle_id    Int
-  usuario_id    Int
-  fecha_inicio  DateTime @default(now())
-  fecha_fin     DateTime?
+  id                  Int       @id @default(autoincrement())
+  id_usuario          Int
+  id_vehiculo         Int
+  fecha_inicio        DateTime  @default(now())
+  fecha_fin           DateTime?
 
-  vehiculo Vehiculo @relation(fields: [vehicle_id], references: [vehicle_id])
-  usuario  Usuario  @relation(fields: [usuario_id], references: [usuario_id])
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  usuario  Usuario  @relation(fields: [id_usuario], references: [id])
+  vehiculo Vehiculo @relation(fields: [id_vehiculo], references: [id])
+
+  @@index([id_usuario])
+  @@index([id_vehiculo])
+  @@index([activo])
 }
 
-model Conexion {
-  connection_id  Int      @id @default(autoincrement())
-  vehicle_id     Int
-  usuario_id     Int
-  connected_at   DateTime @default(now())
-  disconnected_at DateTime?
-  estado         Boolean  @default(true)
-  ip             String?
-  user_agent     String?
+//
+// ────────────────────────────
+//  CONEXIONES Y UBICACIONES
+// ────────────────────────────
+//
 
-  vehiculo Vehiculo @relation(fields: [vehicle_id], references: [vehicle_id])
-  usuario  Usuario  @relation(fields: [usuario_id], references: [usuario_id])
+model Conexion {
+  id                  Int       @id @default(autoincrement())
+  id_usuario          Int
+  id_vehiculo         Int
+  conectado_at        DateTime  @default(now())
+  desconectado_at     DateTime?
+  estado              Boolean   @default(true)
+  ip                  String?
+  sesion_dispositivo          String?
+
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  usuario  Usuario  @relation(fields: [id_usuario], references: [id])
+  vehiculo Vehiculo @relation(fields: [id_vehiculo], references: [id])
+
+  @@index([id_usuario])
+  @@index([id_vehiculo])
+  @@index([estado])
 }
 
 model Ubicacion {
-  location_id   Int      @id @default(autoincrement())
-  vehicle_id    Int
-  fecha_hora    DateTime @default(now())
-  latitud      Float     
-  longitud     Float
-  velocidad_kmh Float?
+  id                  Int       @id @default(autoincrement())
+  id_vehiculo         Int
+  fecha_hora          DateTime  @default(now())
+  latitud             Float
+  longitud            Float
+  velocidad_kmh       Float?
 
-  vehiculo Vehiculo @relation(fields: [vehicle_id], references: [vehicle_id])
+  // Auditoría
+  fecha_creacion      DateTime  @default(now())
+  fecha_modificacion  DateTime?
+  activo              Boolean   @default(true)
+  eliminado           Boolean   @default(false)
+
+  vehiculo Vehiculo @relation(fields: [id_vehiculo], references: [id])
+
+  @@index([id_vehiculo])
+  @@index([fecha_hora])
 }
