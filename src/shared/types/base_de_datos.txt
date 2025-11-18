@@ -1,0 +1,243 @@
+-- ============================================================
+--  TABLE: Persona
+-- ============================================================
+CREATE TABLE "Persona" (
+    id                  SERIAL PRIMARY KEY,
+    nombre              VARCHAR NOT NULL,
+    apellido_paterno    VARCHAR,
+    apellido_materno    VARCHAR,
+    genero              VARCHAR,
+    foto_url            VARCHAR,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX "idx_persona_activo"    ON "Persona"(activo);
+CREATE INDEX "idx_persona_eliminado" ON "Persona"(eliminado);
+
+
+-- ============================================================
+--  TABLE: Documento
+-- ============================================================
+CREATE TABLE "Documento" (
+    id                  SERIAL PRIMARY KEY,
+    id_persona          INT NOT NULL,
+    tipo_documento      VARCHAR NOT NULL,
+    nro_documento       VARCHAR NOT NULL UNIQUE,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_documento_persona
+        FOREIGN KEY(id_persona)
+        REFERENCES "Persona"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_documento_id_persona"   ON "Documento"(id_persona);
+CREATE INDEX "idx_documento_tipo"         ON "Documento"(tipo_documento);
+
+
+-- ============================================================
+--  TABLE: Usuario
+-- ============================================================
+CREATE TABLE "Usuario" (
+    id                  SERIAL PRIMARY KEY,
+    id_persona          INT NOT NULL UNIQUE,
+    username            VARCHAR NOT NULL UNIQUE,
+    password_hash       VARCHAR NOT NULL,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_usuario_persona
+        FOREIGN KEY(id_persona)
+        REFERENCES "Persona"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_usuario_id_persona" ON "Usuario"(id_persona);
+CREATE INDEX "idx_usuario_activo"      ON "Usuario"(activo);
+CREATE INDEX "idx_usuario_eliminado"   ON "Usuario"(eliminado);
+
+
+-- ============================================================
+--  TABLE: Contacto
+-- ============================================================
+CREATE TABLE "Contacto" (
+    id                  SERIAL PRIMARY KEY,
+    id_persona          INT NOT NULL,
+    tipo                VARCHAR NOT NULL,
+    valor               VARCHAR NOT NULL,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_contacto_persona
+        FOREIGN KEY(id_persona)
+        REFERENCES "Persona"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_contacto_id_persona" ON "Contacto"(id_persona);
+CREATE INDEX "idx_contacto_tipo"       ON "Contacto"(tipo);
+
+
+-- ============================================================
+--  TABLE: Rol
+-- ============================================================
+CREATE TABLE "Rol" (
+    id                  SERIAL PRIMARY KEY,
+    nombre              VARCHAR NOT NULL UNIQUE,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX "idx_rol_activo"     ON "Rol"(activo);
+CREATE INDEX "idx_rol_eliminado"  ON "Rol"(eliminado);
+
+
+-- ============================================================
+--  TABLE: UsuarioRol  (Many-to-Many)
+-- ============================================================
+CREATE TABLE "UsuarioRol" (
+    id_usuario  INT NOT NULL,
+    id_rol      INT NOT NULL,
+
+    CONSTRAINT pk_usuario_rol PRIMARY KEY (id_usuario, id_rol),
+
+    CONSTRAINT fk_usuario_rol_usuario
+        FOREIGN KEY(id_usuario)
+        REFERENCES "Usuario"(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_usuario_rol_rol
+        FOREIGN KEY(id_rol)
+        REFERENCES "Rol"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_usuario_rol_usuario" ON "UsuarioRol"(id_usuario);
+CREATE INDEX "idx_usuario_rol_rol"     ON "UsuarioRol"(id_rol);
+
+
+-- ============================================================
+--  TABLE: Vehiculo
+-- ============================================================
+CREATE TABLE "Vehiculo" (
+    id                  SERIAL PRIMARY KEY,
+    placa               VARCHAR NOT NULL UNIQUE,
+    modelo              VARCHAR,
+    anio                INT,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX "idx_vehiculo_activo"     ON "Vehiculo"(activo);
+CREATE INDEX "idx_vehiculo_eliminado"  ON "Vehiculo"(eliminado);
+
+
+-- ============================================================
+--  TABLE: Asignacion
+-- ============================================================
+CREATE TABLE "Asignacion" (
+    id                  SERIAL PRIMARY KEY,
+    id_usuario          INT NOT NULL,
+    id_vehiculo         INT NOT NULL,
+    fecha_inicio        TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_fin           TIMESTAMP,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_asignacion_usuario
+        FOREIGN KEY(id_usuario)
+        REFERENCES "Usuario"(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_asignacion_vehiculo
+        FOREIGN KEY(id_vehiculo)
+        REFERENCES "Vehiculo"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_asignacion_id_usuario" ON "Asignacion"(id_usuario);
+CREATE INDEX "idx_asignacion_id_vehiculo" ON "Asignacion"(id_vehiculo);
+CREATE INDEX "idx_asignacion_activo"      ON "Asignacion"(activo);
+
+
+-- ============================================================
+--  TABLE: Conexion
+-- ============================================================
+CREATE TABLE "Conexion" (
+    id                  SERIAL PRIMARY KEY,
+    id_usuario          INT NOT NULL,
+    id_vehiculo         INT NOT NULL,
+    conectado_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+    desconectado_at     TIMESTAMP,
+    estado              BOOLEAN NOT NULL DEFAULT TRUE,
+    ip                  VARCHAR,
+    sesion_dispositivo  VARCHAR,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_conexion_usuario
+        FOREIGN KEY(id_usuario)
+        REFERENCES "Usuario"(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_conexion_vehiculo
+        FOREIGN KEY(id_vehiculo)
+        REFERENCES "Vehiculo"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_conexion_id_usuario" ON "Conexion"(id_usuario);
+CREATE INDEX "idx_conexion_id_vehiculo" ON "Conexion"(id_vehiculo);
+CREATE INDEX "idx_conexion_estado"       ON "Conexion"(estado);
+
+
+-- ============================================================
+--  TABLE: Ubicacion
+-- ============================================================
+CREATE TABLE "Ubicacion" (
+    id                  SERIAL PRIMARY KEY,
+    id_vehiculo         INT NOT NULL,
+    fecha_hora          TIMESTAMP NOT NULL DEFAULT NOW(),
+    latitud             DOUBLE PRECISION NOT NULL,
+    longitud            DOUBLE PRECISION NOT NULL,
+    velocidad_kmh       DOUBLE PRECISION,
+
+    fecha_creacion      TIMESTAMP NOT NULL DEFAULT NOW(),
+    fecha_modificacion  TIMESTAMP,
+    activo              BOOLEAN NOT NULL DEFAULT TRUE,
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_ubicacion_vehiculo
+        FOREIGN KEY(id_vehiculo)
+        REFERENCES "Vehiculo"(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_ubicacion_id_vehiculo" ON "Ubicacion"(id_vehiculo);
+CREATE INDEX "idx_ubicacion_fecha"        ON "Ubicacion"(fecha_hora);

@@ -31,7 +31,7 @@ const options: swaggerJSDoc.Options = {
       }
     ]
   },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'], // donde están tus rutas
+  apis: ['./src/modules/persona/routes/*.ts', './src/modules/persona/controllers/*.ts'], // donde están tus rutas
 };
 
 export const swaggerDocs = (app: Express) => {
