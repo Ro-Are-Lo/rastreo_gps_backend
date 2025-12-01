@@ -40,7 +40,7 @@ $env:PGPASSWORD = "TU_CONTRASENA"
 ```
 
 ```
-psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE "gps_DB";
+psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE "gps_DB";'
 ```
 
 6. hacer las migraciones
