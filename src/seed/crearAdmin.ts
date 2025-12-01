@@ -1,71 +1,64 @@
+// src/seed/crearAdmin.ts
 import bcrypt from 'bcrypt';
 import { prisma } from '../prisma/client';
 
 async function main() {
-  // 1) Asegurarnos de que existe el rol 'admin' (upsert)
+  console.log('Iniciando seed...');
+
+  // 1) Limpiar tablas (solo para desarrollo)
+  await prisma.usuarioRol.deleteMany();
+  await prisma.usuario.deleteMany();
+
+  // 2) Asegurar roles
   const rolAdmin = await prisma.rol.upsert({
-    where: { nombre: 'admin' }, // requiere que 'nombre' sea UNIQUE en el modelo Rol
+    where: { nombre: 'admin' },
     update: {},
-    create: { nombre: 'admin' }
+    create: { nombre: 'admin' },
   });
 
-  // 2) Datos del usuario que queremos crear
-  const username = 'admin1';
-  const plainPassword = '123456';
+  const rolUser = await prisma.rol.upsert({
+    where: { nombre: 'user' },
+    update: {},
+    create: { nombre: 'user' },
+  });
 
-  // 3) Verificar si el usuario ya existe
-  const existingUser = await prisma.usuario.findUnique({ where: { username } });
-  if (existingUser) {
-    console.log(`Usuario "${username}" ya existe (id=${existingUser.usuario_id}).`);
+  // 3) Crear 25 usuarios
+  for (let i = 1; i <= 25; i++) {
+    const username = `user${i}`;
+    const plainPassword = '123456';
 
-    // Asegurarse de que la relación usuario↔rol exista
-    const existingRel = await prisma.usuarioRol.findFirst({
-      where: { usuario_id: existingUser.usuario_id, rol_id: rolAdmin.rol_id }
+    // Generar valores únicos
+    const timestamp = Date.now(); // para asegurar unicidad
+    const cedula = `CID${timestamp}${i}`;
+    const licencia = `LIC${timestamp}${i}`;
+
+    // Crear usuario
+    const usuario = await prisma.usuario.create({
+      data: {
+        username,
+        password_hash: await bcrypt.hash(plainPassword, 10),
+        nombre: `Nombre${i}`,
+        apellido_paterno: `ApellidoP${i}`,
+        apellido_materno: `ApellidoM${i}`,
+        cedula_identidad: cedula,
+        nacionalidad: 'Boliviana',
+        genero: i % 2 === 0 ? 'F' : 'M',
+        licencia_numero: licencia,
+        licencia_categoria: 'B',
+        foto_url: ''
+      }
     });
 
-    if (!existingRel) {
-      await prisma.usuarioRol.create({
-        data: {
-          usuario_id: existingUser.usuario_id,
-          rol_id: rolAdmin.rol_id
-        }
-      });
-      console.log('Se asignó el rol "admin" al usuario existente.');
-    } else {
-      console.log('El usuario ya tiene asignado el rol "admin".');
-    }
+    // Asignar rol
+    const rolId = i === 1 ? rolAdmin.rol_id : rolUser.rol_id;
+    await prisma.usuarioRol.create({
+      data: { usuario_id: usuario.usuario_id, rol_id: rolId }
+    });
 
-    return;
+    console.log(`Usuario creado: ${username} (${i === 1 ? 'admin' : 'user'})`);
   }
 
-  // 4) Crear el nuevo usuario (hashear password)
-  const passwordHash = await bcrypt.hash(plainPassword, 10);
-
-  const usuario = await prisma.usuario.create({
-    data: {
-      username,
-      password_hash: passwordHash,
-      nombre: 'Carlos',
-      apellido_paterno: 'Gomez',
-      apellido_materno: 'Lopez',
-      cedula_identidad: '1000001',
-      nacionalidad: 'Boliviana',
-      genero: 'M',
-      licencia_numero: 'LIC001',
-      licencia_categoria: 'B',
-      foto_url: ''
-    }
-  });
-
-  // 5) Crear la relación usuario ↔ rol
-  await prisma.usuarioRol.create({
-    data: {
-      usuario_id: usuario.usuario_id,
-      rol_id: rolAdmin.rol_id
-    }
-  });
-
-  console.log('Usuario admin creado:', { usuario_id: usuario.usuario_id, username: usuario.username });
+  console.log('Seed completado correctamente.');
 }
 
 main()
