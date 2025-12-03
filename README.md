@@ -28,7 +28,7 @@
 ```
 @"
 PORT=3000
-DATABASE_URL="postgresql://postgres:root@localhost:5432/gps_DB?schema=public"
+DATABASE_URL="postgresql://postgres:root@localhost:5432/gps_db?schema=public"
 JWT_SECRET=supersecret
 "@ | Out-File -FilePath ".env"
 ```
@@ -40,7 +40,7 @@ $env:PGPASSWORD = "TU_CONTRASENA"
 ```
 
 ```
-psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE "gps_DB";'
+psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE "gps_db";'
 ```
 
 6. hacer las migraciones
@@ -48,7 +48,7 @@ psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE "gps_DB";'
 - codigo 1
 
   ```
-  $env:DATABASE_URL="postgresql://postgres:root@localhost:5432/gps_DB?schema=public"
+  $env:DATABASE_URL="postgresql://postgres:root@localhost:5432/gps_db?schema=public"
   ```
 
   codggo 2
