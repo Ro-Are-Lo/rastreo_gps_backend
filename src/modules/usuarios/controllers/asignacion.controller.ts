@@ -1,5 +1,4 @@
-//src/modules/usuarios/controllers/asignacion.controller.ts
-
+// src/modules/usuarios/controllers/asignacion.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { AsignacionService } from '../services/asignacion.service';
 import { CrearAsignacionDto } from '../dto/crearAsignacion.dto';
@@ -42,7 +41,8 @@ export class AsignacionController {
   listarPorUsuario = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id_usuario = Number(req.params.id_usuario);
-      const result = await service.listarPorUsuario(id_usuario);
+      // ❌ Cambiar: service.listarPorUsuario → service.listarAsignacionesPorUsuario
+      const result = await service.listarAsignacionesPorUsuario(id_usuario);
       res.json(result);
     } catch (err) {
       next(err);
@@ -52,7 +52,8 @@ export class AsignacionController {
   listarPorVehiculo = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id_vehiculo = Number(req.params.id_vehiculo);
-      const result = await service.listarPorVehiculo(id_vehiculo);
+      // ❌ Cambiar: service.listarPorVehiculo → service.listarAsignacionesPorVehiculo
+      const result = await service.listarAsignacionesPorVehiculo(id_vehiculo);
       res.json(result);
     } catch (err) {
       next(err);

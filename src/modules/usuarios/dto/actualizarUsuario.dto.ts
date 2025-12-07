@@ -1,16 +1,19 @@
-//src/modules/usuarios/dto/actualizarRol.dto.ts
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+// src/modules/usuarios/dto/actualizarUsuario.dto.ts
+import { IsString, IsBoolean, IsOptional, MinLength, MaxLength } from 'class-validator';
 
 export class ActualizarUsuarioDto {
-  @IsString()
   @IsOptional()
+  @IsString()
+  @MinLength(3, { message: 'username debe tener al menos 3 caracteres' })
+  @MaxLength(50, { message: 'username no puede tener más de 50 caracteres' })
   username?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
+  @MinLength(6, { message: 'password debe tener al menos 6 caracteres' })
   password?: string;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   activo?: boolean;
 }

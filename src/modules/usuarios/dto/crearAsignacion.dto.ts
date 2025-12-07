@@ -1,18 +1,18 @@
-//src/modules/usuarios/dto/crearAsignacion.dto.ts
+// src/modules/usuarios/dto/crearAsignacion.dto.ts
 import { IsInt, IsOptional, IsDateString } from 'class-validator';
 
 export class CrearAsignacionDto {
   @IsInt()
-  id_usuario: number;
+  id_usuario!: number;    
 
   @IsInt()
-  id_vehiculo: number;
+  id_vehiculo!: number;   
 
   @IsDateString()
   @IsOptional()
-  fecha_inicio?: string;
+  fecha_inicio?: string;  
 
   @IsDateString()
   @IsOptional()
-  fecha_fin?: string;
+  fecha_fin?: string;     
 }

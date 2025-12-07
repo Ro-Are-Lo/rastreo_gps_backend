@@ -1,4 +1,4 @@
-//src/modules/usuarios/controllers/conexion.controller.ts
+// src/modules/usuarios/controllers/conexion.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { ConexionService } from '../services/conexion.service';
 import { CrearConexionDto } from '../dto/crearConexion.dto';
@@ -19,7 +19,8 @@ export class ConexionController {
   desconectar = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = Number(req.params.id);
-      const result = await service.desconectar(id);
+      // ❌ Cambiar: service.desconectar → service.desconectarConexion
+      const result = await service.desconectarConexion(id);
       res.json({ success: true, message: 'Conexión finalizada', data: result });
     } catch (err) {
       next(err);
@@ -29,7 +30,8 @@ export class ConexionController {
   listarPorUsuario = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id_usuario = Number(req.params.id_usuario);
-      const result = await service.listarPorUsuario(id_usuario);
+      // ❌ Cambiar: service.listarPorUsuario → service.listarConexionesPorUsuario
+      const result = await service.listarConexionesPorUsuario(id_usuario);
       res.json(result);
     } catch (err) {
       next(err);
@@ -39,7 +41,8 @@ export class ConexionController {
   listarPorVehiculo = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id_vehiculo = Number(req.params.id_vehiculo);
-      const result = await service.listarPorVehiculo(id_vehiculo);
+      // ❌ Cambiar: service.listarPorVehiculo → service.listarConexionesPorVehiculo
+      const result = await service.listarConexionesPorVehiculo(id_vehiculo);
       res.json(result);
     } catch (err) {
       next(err);

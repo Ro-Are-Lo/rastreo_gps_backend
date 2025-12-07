@@ -1,36 +1,78 @@
-//src/modules/usuarios/repositories/asignacion.repository.ts
+// src/modules/usuarios/repositories/asignacion.repository.ts (REFACTORIZADO)
 import { prisma } from '../../../config/prisma';
-import { CrearAsignacionDto } from '../dto/crearAsignacion.dto';
-import { ActualizarAsignacionDto } from '../dto/actualizarAsignacion.dto';
+import { AsignacionEntity } from '../entities/asignacion.entity';
+import { AppError } from '../../../core/errors/AppError';
 
 export class AsignacionRepository {
-  async create(data: CrearAsignacionDto) {
-    return prisma.asignacion.create({ data });
+  
+   async crear(entity: AsignacionEntity): Promise<AsignacionEntity> {
+    try {
+      const dbResult = await prisma.asignacion.create({
+        data: entity.toPrisma()
+      });
+      return new AsignacionEntity(dbResult);
+    } catch (error: any) {
+      // ✅ Manejar errores específicos de Prisma
+      if (error.code === 'P2003') {
+        throw new AppError('Usuario o vehículo no existe', 400);
+      }
+      if (error.code === 'P2002') {
+        throw new AppError('Asignación duplicada', 400);
+      }
+      throw new AppError(`Error al crear asignación: ${error.message}`, 500);
+    }
   }
 
-  async findById(id: number) {
-    return prisma.asignacion.findUnique({ where: { id } });
-  }
 
-  async update(id: number, data: ActualizarAsignacionDto) {
-    return prisma.asignacion.update({
-      where: { id },
-      data: { ...data, fecha_modificacion: new Date() },
+
+  async buscarPorId(id: number): Promise<AsignacionEntity | null> {
+    const dbResult = await prisma.asignacion.findFirst({
+      where: { id, eliminado: false }
     });
+    return dbResult ? new AsignacionEntity(dbResult) : null;
   }
 
-  async softDelete(id: number) {
-    return prisma.asignacion.update({
+  async actualizar(id: number, entity: AsignacionEntity): Promise<AsignacionEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Asignación no encontrada', 404);
+    }
+
+    const dbResult = await prisma.asignacion.update({
       where: { id },
-      data: { activo: false, eliminado: true, fecha_modificacion: new Date() },
+      data: entity.toPrisma()
     });
+    return new AsignacionEntity(dbResult);
   }
 
-  async listByUsuario(id_usuario: number) {
-    return prisma.asignacion.findMany({ where: { id_usuario, eliminado: false } });
+  async eliminarSuavemente(id: number): Promise<AsignacionEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Asignación no encontrada', 404);
+    }
+
+    const dbResult = await prisma.asignacion.update({
+      where: { id },
+      data: {
+        activo: false,
+        eliminado: true,
+        fecha_modificacion: new Date()
+      }
+    });
+    return new AsignacionEntity(dbResult);
   }
 
-  async listByVehiculo(id_vehiculo: number) {
-    return prisma.asignacion.findMany({ where: { id_vehiculo, eliminado: false } });
+  async buscarPorUsuario(id_usuario: number): Promise<AsignacionEntity[]> {
+    const dbResults = await prisma.asignacion.findMany({
+      where: { id_usuario, eliminado: false }
+    });
+    return dbResults.map(result => new AsignacionEntity(result));
+  }
+
+  async buscarPorVehiculo(id_vehiculo: number): Promise<AsignacionEntity[]> {
+    const dbResults = await prisma.asignacion.findMany({
+      where: { id_vehiculo, eliminado: false }
+    });
+    return dbResults.map(result => new AsignacionEntity(result));
   }
 }

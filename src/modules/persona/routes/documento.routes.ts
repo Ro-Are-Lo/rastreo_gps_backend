@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { DocumentoController } from '../controllers/documento.controller';
 import { validateBody } from '../../../shared/middlewares/validate.middleware';
 import { CrearDocumentoDto } from '../dto/crear.documento';
-import { actualizarDocumentoDto } from '../dto/actualizar.documento';
+import { ActualizarDocumentoDto } from '../dto/actualizar.documento';
 
 const router = Router({ mergeParams: true });
 const controller = new DocumentoController();
@@ -111,7 +111,7 @@ router.get('/', controller.listarDocumentos);
 
 router.put(
   '/:id',
-  validateBody(actualizarDocumentoDto),
+  validateBody(ActualizarDocumentoDto),
   controller.actualizarDocumento
 );
 

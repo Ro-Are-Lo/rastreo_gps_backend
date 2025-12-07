@@ -1,17 +1,22 @@
-//src/modules/vehiculo/dto/crearUbicacion.dto.ts
-import { IsInt, IsNumber, IsOptional, IsDateString } from 'class-validator';
+// src/modules/vehiculo/dto/crearUbicacion.dto.ts (AJUSTADO)
+import { IsInt, IsNumber, IsOptional, IsDateString, Min, Max } from 'class-validator';
 
 export class CrearUbicacionDto {
   @IsInt()
-  id_vehiculo: number;
+  id_vehiculo!: number;
 
   @IsNumber()
-  latitud: number;
+  @Min(-90)
+  @Max(90)
+  latitud!: number;
 
   @IsNumber()
-  longitud: number;
+  @Min(-180)
+  @Max(180)
+  longitud!: number;
 
   @IsNumber()
+  @Min(0)
   @IsOptional()
   velocidad_kmh?: number;
 
