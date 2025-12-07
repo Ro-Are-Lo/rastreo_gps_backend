@@ -1,36 +1,69 @@
-//src/modules/usuarios/repositories/rol.repository.ts
+// src/modules/usuarios/repositories/rol.repository.ts (REFACTORIZADO)
 import { prisma } from '../../../config/prisma';
-import { CrearRolDto } from '../dto/crearRol.dto';
-import { ActualizarRolDto } from '../dto/actualizarRol.dto';
+import { RolEntity } from '../entities/rol.entity';
+import { AppError } from '../../../core/errors/AppError';
 
 export class RolRepository {
-  async create(data: CrearRolDto) {
-    return prisma.rol.create({ data });
+  async crear(entity: RolEntity): Promise<RolEntity> {
+    try {
+      const dbResult = await prisma.rol.create({
+        data: entity.toPrisma()
+      });
+      return new RolEntity(dbResult);
+    } catch (error) {
+      throw new AppError('Error al crear rol', 500);
+    }
   }
 
-  async findById(id: number) {
-    return prisma.rol.findUnique({ where: { id } });
-  }
-
-  async findByName(nombre: string) {
-    return prisma.rol.findUnique({ where: { nombre } });
-  }
-
-  async update(id: number, data: ActualizarRolDto) {
-    return prisma.rol.update({
-      where: { id },
-      data: { ...data, fecha_modificacion: new Date() },
+  async buscarPorId(id: number): Promise<RolEntity | null> {
+    const dbResult = await prisma.rol.findFirst({
+      where: { id, eliminado: false }
     });
+    return dbResult ? new RolEntity(dbResult) : null;
   }
 
-  async softDelete(id: number) {
-    return prisma.rol.update({
-      where: { id },
-      data: { activo: false, eliminado: true, fecha_modificacion: new Date() },
+  async buscarPorNombre(nombre: string): Promise<RolEntity | null> {
+    const dbResult = await prisma.rol.findFirst({
+      where: { nombre, eliminado: false }
     });
+    return dbResult ? new RolEntity(dbResult) : null;
   }
 
-  async list() {
-    return prisma.rol.findMany({ where: { eliminado: false } });
+  async actualizar(id: number, entity: RolEntity): Promise<RolEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Rol no encontrado', 404);
+    }
+
+    const dbResult = await prisma.rol.update({
+      where: { id },
+      data: entity.toPrisma()
+    });
+    return new RolEntity(dbResult);
+  }
+
+  async eliminarSuavemente(id: number): Promise<RolEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Rol no encontrado', 404);
+    }
+
+    const dbResult = await prisma.rol.update({
+      where: { id },
+      data: {
+        activo: false,
+        eliminado: true,
+        fecha_modificacion: new Date()
+      }
+    });
+    return new RolEntity(dbResult);
+  }
+
+  async buscarTodosRoles(): Promise<RolEntity[]> {
+    const dbResults = await prisma.rol.findMany({
+      where: { eliminado: false },
+      orderBy: { fecha_creacion: 'desc' }
+    });
+    return dbResults.map(result => new RolEntity(result));
   }
 }

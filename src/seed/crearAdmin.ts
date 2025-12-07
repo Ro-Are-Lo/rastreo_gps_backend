@@ -1,78 +1,127 @@
+// src/seed/crearAdmin.ts (COMPLETO CORREGIDO - NUEVA VERSIÓN)
+import { prisma } from '../config/prisma';
 import bcrypt from 'bcrypt';
-import { prisma } from '../prisma/client';
 
-async function main() {
-  // 1) Asegurarnos de que existe el rol 'admin' (upsert)
-  const rolAdmin = await prisma.rol.upsert({
-    where: { nombre: 'admin' }, // requiere que 'nombre' sea UNIQUE en el modelo Rol
-    update: {},
-    create: { nombre: 'admin' }
-  });
+export async function crearAdmin() {
+  try {
+    const username = 'admin';
+    const password = 'admin123';
+    
+    console.log('=== Creando usuario administrador ===');
 
-  // 2) Datos del usuario que queremos crear
-  const username = 'admin2';
-  const plainPassword = '123456';
-
-  // 3) Verificar si el usuario ya existe
-  const existingUser = await prisma.usuario.findUnique({ where: { username } });
-  if (existingUser) {
-    console.log(`Usuario "${username}" ya existe (id=${existingUser.usuario_id}).`);
-
-    // Asegurarse de que la relación usuario↔rol exista
-    const existingRel = await prisma.usuarioRol.findFirst({
-      where: { usuario_id: existingUser.usuario_id, rol_id: rolAdmin.rol_id }
+    // 1. Verificar o crear rol ADMIN
+    let rolAdmin = await prisma.rol.findFirst({
+      where: { nombre: 'ADMIN' }
     });
-
-    if (!existingRel) {
-      await prisma.usuarioRol.create({
+    
+    if (!rolAdmin) {
+      rolAdmin = await prisma.rol.create({
         data: {
-          usuario_id: existingUser.usuario_id,
-          rol_id: rolAdmin.rol_id
+          nombre: 'ADMIN',
+          fecha_creacion: new Date(),
+          activo: true,
+          eliminado: false
         }
       });
-      console.log('Se asignó el rol "admin" al usuario existente.');
+      console.log('✅ Rol ADMIN creado');
     } else {
-      console.log('El usuario ya tiene asignado el rol "admin".');
+      console.log('✅ Rol ADMIN ya existe');
     }
 
-    return;
+    // 2. Buscar usuario existente
+    const existingUser = await prisma.usuario.findFirst({
+      where: { username }
+    });
+
+    if (existingUser) {
+      console.log(`✅ Usuario "${username}" ya existe (id=${existingUser.id})`);
+      
+      // Verificar si ya tiene rol ADMIN
+      const existingRole = await prisma.usuarioRol.findUnique({
+        where: { 
+          id_usuario_id_rol: { 
+            id_usuario: existingUser.id, 
+            id_rol: rolAdmin.id 
+          } 
+        }
+      });
+
+      if (!existingRole) {
+        // Asignar rol ADMIN
+        await prisma.usuarioRol.create({
+          data: {
+            id_usuario: existingUser.id,
+            id_rol: rolAdmin.id
+          }
+        });
+        console.log('✅ Rol ADMIN asignado al usuario existente');
+      } else {
+        console.log('✅ El usuario ya tenía rol ADMIN');
+      }
+      
+      console.log('Credenciales:', { username, password });
+      return;
+    }
+
+    // 3. Crear persona para el admin
+    const personaAdmin = await prisma.persona.create({
+      data: {
+        nombre: 'Administrador',
+        apellido_paterno: 'Sistema',
+        genero: 'O',
+        fecha_creacion: new Date(),
+        activo: true,
+        eliminado: false
+      }
+    });
+    console.log('✅ Persona admin creada');
+
+    // 4. Crear usuario admin con password hasheado
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const usuarioAdmin = await prisma.usuario.create({
+      data: {
+        id_persona: personaAdmin.id,
+        username,
+        password_hash: hashedPassword,
+        fecha_creacion: new Date(),
+        activo: true,
+        eliminado: false
+      }
+    });
+    console.log('✅ Usuario admin creado');
+
+    // 5. Asignar rol ADMIN
+    await prisma.usuarioRol.create({
+      data: {
+        id_usuario: usuarioAdmin.id,
+        id_rol: rolAdmin.id
+      }
+    });
+    console.log('✅ Rol ADMIN asignado');
+
+    console.log('========================================');
+    console.log('✅ ADMIN CREADO EXITOSAMENTE');
+    console.log('Usuario:', username);
+    console.log('Password:', password);
+    console.log('Usuario ID:', usuarioAdmin.id);
+    console.log('========================================');
+    
+  } catch (error) {
+    console.error('❌ Error al crear admin:', error);
+    throw error;
   }
-
-  // 4) Crear el nuevo usuario (hashear password)
-  const passwordHash = await bcrypt.hash(plainPassword, 10);
-
-  const usuario = await prisma.usuario.create({
-    data: {
-      username,
-      password_hash: passwordHash,
-      nombre: 'Dante',
-      apellido_paterno: 'Plant',
-      apellido_materno: 'Lopez',
-      cedula_identidad: '1000003',
-      nacionalidad: 'Boliviana',
-      genero: 'M',
-      licencia_numero: 'LIC003',
-      licencia_categoria: 'B',
-      foto_url: ''
-    }
-  });
-
-  // 5) Crear la relación usuario ↔ rol
-  await prisma.usuarioRol.create({
-    data: {
-      usuario_id: usuario.usuario_id,
-      rol_id: rolAdmin.rol_id
-    }
-  });
-
-  console.log('Usuario admin creado:', { usuario_id: usuario.usuario_id, username: usuario.username });
 }
 
-main()
-  .catch((e) => {
-    console.error('Error en seed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Ejecutar si es script principal
+if (require.main === module) {
+  crearAdmin()
+    .then(() => {
+      console.log('✅ Script completado');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('❌ Error:', error);
+      process.exit(1);
+    });
+}

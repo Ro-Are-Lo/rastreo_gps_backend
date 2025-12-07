@@ -1,7 +1,13 @@
-//
-//src/modules/usuarios/routes/usuario.routes.ts
+
+
 import { Router } from 'express';
+
+
 import { UsuarioController } from '../controllers/usuario.controller';
+
+import { validateBody } from '../../../shared/middlewares/validate.middleware'; // ¡IMPORTANTE!
+import { CrearUsuarioDto } from '../dto/crearUsuario.dto'; // ¡IMPORTANTE!
+import { ActualizarUsuarioDto } from '../dto/actualizarUsuario.dto'; // ¡IMPORTANTE!
 
 const router = Router();
 const controller = new UsuarioController();
@@ -12,6 +18,7 @@ const controller = new UsuarioController();
  *   name: Usuarios
  *   description: Gestión de usuarios
  */
+
 
 /**
  * @swagger
@@ -35,31 +42,35 @@ const controller = new UsuarioController();
  *                 example: 1
  *               username:
  *                 type: string
- *                 example: "jdoe"
+ *                 example: jdoe
  *               password:
  *                 type: string
- *                 example: "123456"
+ *                 example: 123456
  *     responses:
  *       201:
  *         description: Usuario creado correctamente
+ *       400:
+ *         description: Error de validación
  */
-router.post('/', controller.crearUsuario);
+router.post('/', validateBody(CrearUsuarioDto), controller.crearUsuario);
 
 /**
  * @swagger
  * /api/usuarios/{id}:
  *   get:
- *     summary: Obtener usuario por ID
+ *     summary: Obtener un usuario por ID
  *     tags: [Usuarios]
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: Usuario encontrado
+ *         description: Datos del usuario
+ *       404:
+ *         description: Usuario no encontrado
  */
 router.get('/:id', controller.obtenerUsuario);
 
@@ -67,11 +78,11 @@ router.get('/:id', controller.obtenerUsuario);
  * @swagger
  * /api/usuarios/{id}:
  *   put:
- *     summary: Actualizar usuario
+ *     summary: Actualizar un usuario
  *     tags: [Usuarios]
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
@@ -84,35 +95,44 @@ router.get('/:id', controller.obtenerUsuario);
  *             properties:
  *               username:
  *                 type: string
- *                 example: "nuevoUser"
+ *                 example: nuevoUser
  *               password:
  *                 type: string
- *                 example: "newPassword"
+ *                 example: newPassword
  *               activo:
  *                 type: boolean
  *                 example: true
  *     responses:
  *       200:
  *         description: Usuario actualizado correctamente
+ *       400:
+ *         description: Datos inválidos
+ *       404:
+ *         description: Usuario no encontrado
  */
-router.put('/:id', controller.actualizarUsuario);
+router.put('/:id', validateBody(ActualizarUsuarioDto), controller.actualizarUsuario);
 
 /**
  * @swagger
  * /api/usuarios/{id}:
  *   delete:
- *     summary: Eliminar usuario
+ *     summary: Eliminar un usuario
  *     tags: [Usuarios]
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
  *         description: Usuario eliminado correctamente
+ *       404:
+ *         description: Usuario no encontrado
  */
 router.delete('/:id', controller.eliminarUsuario);
 
+
+
+router.get('/', controller.listarUsuarios);
 export default router;

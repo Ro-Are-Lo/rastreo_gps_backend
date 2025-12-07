@@ -16,7 +16,7 @@ const controller = new AsignacionController();
  *   description: Gestión de asignaciones de vehículos a usuarios
  */
 
-/** 
+/**
  * @swagger
  * /api/asignaciones:
  *   post:
@@ -31,18 +31,22 @@ const controller = new AsignacionController();
  *     responses:
  *       201:
  *         description: Asignación creada exitosamente
- *       400:
- *         description: Error en la solicitud
+ */
+
+router.post('/',validateBody(CrearAsignacionDto), controller.crear);
+
+/**
+ * @swagger
+ * /api/asignaciones/{id}:
  *   put:
  *     summary: Actualizar una asignación existente
  *     tags: [Asignaciones]
  *     parameters:
  *       - in: path
  *         name: id
- *         schema:
- *           type: string
  *         required: true
- *         description: ID de la asignación a actualizar
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -52,55 +56,63 @@ const controller = new AsignacionController();
  *     responses:
  *       200:
  *         description: Asignación actualizada exitosamente
- *       400:
- *         description: Error en la solicitud
+ */
+router.put('/:id',validateBody(ActualizarAsignacionDto), controller.actualizar);
+/**
+ * @swagger
+ * /api/asignaciones/{id}:
  *   delete:
  *     summary: Eliminar una asignación
  *     tags: [Asignaciones]
  *     parameters:
  *       - in: path
  *         name: id
- *         schema:
- *           type: string
  *         required: true
- *         description: ID de la asignación a eliminar
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Asignación eliminada exitosamente
- *       404:
- *         description: Asignación no encontrada
+ *         description: Asignación eliminada
+ */
+
+router.delete('/:id', controller.eliminar);
+/**
+ * @swagger
+ * /api/asignaciones/usuario/{id_usuario}:
  *   get:
- *     summary: Listar asignaciones por usuario o vehículo
+ *     summary: Listar asignaciones por usuario
  *     tags: [Asignaciones]
  *     parameters:
  *       - in: path
  *         name: id_usuario
+ *         required: true
  *         schema:
- *           type: string
- *         required: false
- *         description: ID del usuario para filtrar asignaciones
- *       - in: path
- *         name: id_vehiculo
- *         schema:
- *           type: string
- *         required: false
- *         description: ID del vehículo para filtrar asignaciones
+ *           type: integer
  *     responses:
  *       200:
  *         description: Lista de asignaciones
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Asignacion'
- *       404:
- *         description: No se encontraron asignaciones
- **/
-router.post('/',validateBody(CrearAsignacionDto), controller.crear);
-router.put('/:id',validateBody(ActualizarAsignacionDto), controller.actualizar);
-router.delete('/:id', controller.eliminar);
+ */
+
 router.get('/usuario/:id_usuario', controller.listarPorUsuario);
+
+
+/**
+ * @swagger
+ * /api/asignaciones/vehiculo/{id_vehiculo}:
+ *   get:
+ *     summary: Listar asignaciones por vehículo
+ *     tags: [Asignaciones]
+ *     parameters:
+ *       - in: path
+ *         name: id_vehiculo
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de asignaciones
+ */
+
 router.get('/vehiculo/:id_vehiculo', controller.listarPorVehiculo);
 
 export default router;

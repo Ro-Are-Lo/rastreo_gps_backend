@@ -35,17 +35,16 @@ export class DocumentoController {
 
   actualizarDocumento = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const id = Number(req.params.id);
-      const { tipo_documento, nro_documento } = req.body;
+      const idDocumento = Number(req.params.id);
+      const { tipoDocumento, nroDocumento } = req.body;
 
-      const doc = await documentoService.actualizarDocumento(id, {
-        tipo_documento,
-        nro_documento,
+      const documentoActualizado = await documentoService.actualizarDocumento(idDocumento, {
+        tipo_documento: tipoDocumento,
+        nro_documento: nroDocumento,
       });
-
-      res.json(doc);
-    } catch (err) {
-      next(err);
+      res.json(documentoActualizado);
+    } catch (error) {
+      next(error);
     }
   };
 

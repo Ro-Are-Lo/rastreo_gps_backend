@@ -1,14 +1,16 @@
-//src/modules/usuarios/controllers/usuarioRol.controller.ts
+// src/modules/usuarios/controllers/usuarioRol.controller.ts (CORREGIDO)
 import { Request, Response, NextFunction } from 'express';
 import { UsuarioRolService } from '../services/usuarioRol.service';
+import { CrearUsuarioRolDto } from '../dto/crearUsarioRol.dto';
+import { BorrarUsuarioRolDto } from '../dto/borrarUsuarioRol.dto'; // ✅ Añadir import
 
 const service = new UsuarioRolService();
 
 export class UsuarioRolController {
   asignarRol = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id_usuario, id_rol } = req.body;
-      const result = await service.asignarRol(id_usuario, id_rol);
+      const dto: CrearUsuarioRolDto = req.body; // ✅ Crear DTO
+      const result = await service.asignarRol(dto); // ✅ Pasar DTO, no parámetros separados
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -17,8 +19,8 @@ export class UsuarioRolController {
 
   removerRol = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id_usuario, id_rol } = req.body;
-      const result = await service.removerRol(id_usuario, id_rol);
+      const dto: BorrarUsuarioRolDto = req.body; // ✅ Crear DTO
+      const result = await service.borrarRol(dto); // ✅ Método se llama "borrarRol", no "removerRol"
       res.json({ success: true, message: 'Rol removido' });
     } catch (err) {
       next(err);

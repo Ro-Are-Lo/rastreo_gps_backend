@@ -1,39 +1,69 @@
 // src/modules/persona/repositories/contacto.repository.ts
 import { prisma } from '../../../config/prisma';
-import { CrearContactoDto } from '../dto/crear.contacto';
-import { ActualizarContactoDto } from '../dto/actualizar.contacto';
+import { ContactoEntity } from '../entities/contacto.entity';
+import { AppError } from '../../../core/errors/AppError';
+
 export class ContactoRepository {
-
-  async create(data: CrearContactoDto) {
-    return prisma.contacto.create({ data });
+  async crear(entity: ContactoEntity): Promise<ContactoEntity> {
+    try {
+      const dbResult = await prisma.contacto.create({
+        data: entity.toPrisma()
+      });
+      return new ContactoEntity(dbResult);
+    } catch (error) {
+      throw new AppError('Error al crear contacto', 500);
+    }
   }
 
-  async findByPersona(id_persona: number) {
-    return prisma.contacto.findMany({
+  async buscarPorPersona(id_persona: number): Promise<ContactoEntity[]> {
+    const dbResults = await prisma.contacto.findMany({
       where: { id_persona, eliminado: false },
-      orderBy: { fecha_creacion: 'desc' },
+      orderBy: { fecha_creacion: 'desc' }
     });
+    
+    return dbResults.map(result => new ContactoEntity(result));
   }
 
-  async findById(id: number) {
-    return prisma.contacto.findUnique({ where: { id } });
+  async buscarPorId(id: number): Promise<ContactoEntity | null> {
+    const dbResult = await prisma.contacto.findUnique({
+      where: { id, eliminado: false }
+    });
+    return dbResult ? new ContactoEntity(dbResult) : null;
   }
 
-  async update(id: number, data: ActualizarContactoDto) {
-    return prisma.contacto.update({
+  async actualizar(id: number, entity: ContactoEntity): Promise<ContactoEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Contacto no encontrado', 404);
+    }
+
+    const dbResult = await prisma.contacto.update({
       where: { id },
-      data: { ...data, fecha_modificacion: new Date() },
+      data: {
+        tipo: entity.tipo,
+        valor: entity.valor,
+        fecha_modificacion: new Date()
+      }
     });
+    
+    return new ContactoEntity(dbResult);
   }
 
-  async softDelete(id: number) {
-    return prisma.contacto.update({
+  async eliminarSuavemente(id: number): Promise<ContactoEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Contacto no encontrado', 404);
+    }
+
+    const dbResult = await prisma.contacto.update({
       where: { id },
       data: {
         activo: false,
         eliminado: true,
-        fecha_modificacion: new Date(),
-      },
+        fecha_modificacion: new Date()
+      }
     });
+    
+    return new ContactoEntity(dbResult);
   }
 }

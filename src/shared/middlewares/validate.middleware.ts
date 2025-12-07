@@ -1,29 +1,26 @@
-import { plainToInstance } from 'class-transformer';
+// src/shared/middlewares/validate.middleware.ts
+import { Request, Response, NextFunction } from 'express';
 import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
-export function validateBody(dtoClass: any) {
-  return async (req: any, res: any, next: any) => {
-
-    // Transformar y solo permitir campos con @Expose()
-    const dto = plainToInstance(dtoClass, req.body, {
-      excludeExtraneousValues: true,
-      enableImplicitConversion: true
-    });
-
-    const errors = await validate(dto, {
-      whitelist: true,        //  elimina propiedades no definidas
-      forbidNonWhitelisted: true, //  si envían algo raro → error inmediato
-      skipMissingProperties: false
-    });
-
+export const validateBody = (dtoClass: any) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const dtoInstance = plainToInstance(dtoClass, req.body);
+    
+    const errors = await validate(dtoInstance);
+    
     if (errors.length > 0) {
       return res.status(400).json({
-        message: "Error de validación",
-        errors
+        message: 'Error de validación',
+        errors: errors.map(error => ({
+          property: error.property,
+          value: error.value,
+          constraints: error.constraints
+        }))
       });
     }
-
-    req.body = dto;
+    
+    req.body = dtoInstance; // Reemplazar con la instancia validada
     next();
   };
-}
+};

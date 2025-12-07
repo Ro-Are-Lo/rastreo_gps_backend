@@ -7,10 +7,31 @@
     "seed": "ts-node src/seed/seedPruebapersona/prueba-seed.ts",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --testPathPattern=integracion",
+    "test:unit": "jest --testPathPattern=\\.test\\.ts$",
+    "test:persona": "jest persona.integracion.test.ts",
+    "test:usuario": "jest usuario.integracion.test.ts",
+    "test:vehiculo": "jest vehiculo.integracion.test.ts",
+    "test:db:reset": "npx prisma db push --force-reset --accept-data-loss",
+    "test:db:seed": "ts-node src/seed/test-seed.ts",
+    "test:setup": "npm run test:db:reset && npm run test:db:seed",
+    "test:full": "npm run test:setup && npm test",
+    "seed:completo": "ts-node src/seed/seed-completo.ts",
+    "docker:dev": "docker-compose up",
+    "docker:build": "docker build -t rastreo-gps-backend .",
+    "docker:prod": "docker build -f Dockerfile.prod -t rastreo-gps-backend-prod .",
+
+    "prisma:studio": "npx prisma studio",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:generate": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
+    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
@@ -24,15 +45,49 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.8.1",
     "@types/socket.io": "^3.0.1",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "jest": "^30.2.0",
     "prisma": "^6.16.3",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testMatch": [
+      "**/test/**/*.test.ts",
+      "**/__tests__/**/*.test.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/**/index.ts",
+      "!src/**/routes.ts",
+      "!src/seed/**"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/test/setup.ts"
+    ],
+    "testTimeout": 10000,
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   }
 }

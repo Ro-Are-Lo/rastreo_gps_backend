@@ -1,62 +1,72 @@
-// src/modules/persona/repository/persona.repository.ts
+// src/modules/persona/repositories/persona.repository.ts
 import { prisma } from '../../../config/prisma';
-import { CrearPersonaDto } from '../dto/crear.persona';
-import {actualizarPersonaDto  } from '../dto/actualizar.persona';
+import { PersonaEntity } from '../entities/persona.entity';
+import { AppError } from '../../../core/errors/AppError';
 
 export class PersonaRepository {
-
-
-  //create una nueva persona
-  async create(data: CrearPersonaDto) {
-    return prisma.persona.create({ data, });
+  async crear(entity: PersonaEntity): Promise<PersonaEntity> {
+    try {
+      const dbResult = await prisma.persona.create({
+        data: entity.toPrisma()
+      });
+      return new PersonaEntity(dbResult);
+    } catch (error) {
+      throw new AppError('Error al crear persona', 500);
+    }
   }
 
-  //buscar persona por id
-  async findById(id: number) {
-    return prisma.persona.findUnique({
+  async buscarPorId(id: number): Promise<PersonaEntity | null> {
+    const dbResult = await prisma.persona.findUnique({
+      where: { id, eliminado: false }
+    });
+    return dbResult ? new PersonaEntity(dbResult) : null;
+  }
+
+  
+
+  async buscarTodos(onlyActive: boolean = true): Promise<PersonaEntity[]> {
+  const where = onlyActive ? { 
+    activo: true,      
+    eliminado: false   // ← ESTO YA ESTÁ, pero verifica que funcione
+  } : {};
+  
+  const dbResults = await prisma.persona.findMany({
+    where,
+    orderBy: { fecha_creacion: 'desc' }
+  });
+  
+  return dbResults.map(result => new PersonaEntity(result));
+}
+
+  async actualizar(id: number, entity: PersonaEntity): Promise<PersonaEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Persona no encontrada', 404);
+    }
+
+    const dbResult = await prisma.persona.update({
       where: { id },
+      data: entity.toPrisma()
     });
+    
+    return new PersonaEntity(dbResult);
   }
 
-  //buscar persona activa por id
-  async findByIdActive(id: number) {
-    return prisma.persona.findFirst({
-      where: { id, eliminado: false },
-    });
-  }
+  async eliminarSuavemente(id: number): Promise<PersonaEntity> {
+    const existe = await this.buscarPorId(id);
+    if (!existe) {
+      throw new AppError('Persona no encontrada', 404);
+    }
 
-  //obtener todas las personas
-  async findAll(onlyActive = true) {
-    const where = onlyActive ? { eliminado: false } : {};
-
-    return prisma.persona.findMany({
-      where,
-      orderBy: {
-        fecha_creacion: 'desc',
-      },
-    });
-  }
-
-//actualizar persona
-  async update(id: number, data: actualizarPersonaDto) {
-    return prisma.persona.update({
-      where: { id },
-      data: {
-        ...data,
-        fecha_modificacion: new Date(),
-      },
-    });
-  }
-
-  //eliminar persona logica (soft delete)
-  async softDelete(id: number) {
-    return prisma.persona.update({
+    const dbResult = await prisma.persona.update({
       where: { id },
       data: {
         activo: false,
         eliminado: true,
-        fecha_modificacion: new Date(),
-      },
+        fecha_modificacion: new Date()
+      }
     });
+    
+    return new PersonaEntity(dbResult);
   }
 }

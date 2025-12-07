@@ -1,51 +1,64 @@
-// src/modules/persona/service/persona.service.ts
+// src/modules/persona/services/persona.service.ts
 import { PersonaRepository } from '../repositories/persona.repository';
-import { AppError } from '../../../core/errors/AppError';
+import { PersonaEntity } from '../entities/persona.entity';
 import { CrearPersonaDto } from '../dto/crear.persona';
-import{ actualizarPersonaDto as ActualizarPersonaDto } from '../dto/actualizar.persona';
+import { actualizarPersonaDto } from '../dto/actualizar.persona';
 
 export class PersonaService {
-  private repo = new PersonaRepository();
-  
+  private personaRepository = new PersonaRepository();
 
-  async crearPersona(dto: CrearPersonaDto) {
-    // ejemplo: validar nombre único? (no hay constraint). Aquí podrías normalizar datos.
-    const persona = await this.repo.create(dto);
-    return persona;
+  async crearPersona(dto: CrearPersonaDto): Promise<PersonaEntity> {
+    // ✅ Convertir DTO a Entity
+    const personaEntity = new PersonaEntity({
+      nombre: dto.nombre,
+      apellido_paterno: dto.apellido_paterno,
+      apellido_materno: dto.apellido_materno,
+      genero: dto.genero,
+      foto_url: dto.foto_url
+    });
+
+    return this.personaRepository.crear(personaEntity);
+    
+  }async obtenerPersona(id: number): Promise<PersonaEntity> {
+  const persona = await this.personaRepository.buscarPorId(id);
+  if (!persona) {
+    const error: any = new Error('Persona no encontrada');
+    error.statusCode = 404; // ← Añade statusCode
+    throw error;
   }
-
-  //obtener persona por id
-  async obtenerPersona(id: number) {
-    const persona = await this.repo.findByIdActive(id);
-    if (!persona) throw new AppError('Persona no encontrada', 404);
-    return persona;
-  }
-
-  //listar personas con paginación simple
-  async listarPersonas(pagina = 1, perPage = 20) {
-    // implementa paginación simple en service si lo quieres
-    const all = await this.repo.findAll(true);
-    // nota: para grandes volúmenes mejor usar findMany con skip/take
+  return persona;
+}
+  async listarPersonas(pagina: number = 1, perPage: number = 20) {
+    const todas = await this.personaRepository.buscarTodos(true);
     const start = (pagina - 1) * perPage;
+    
     return {
-      total: all.length,
-      data: all.slice(start, start + perPage),
+      total: todas.length,
+      pagina,
+      perPage,
+      data: todas.slice(start, start + perPage)
     };
   }
-//actualizar persona
-  async actualizarPersona(id: number, dto: ActualizarPersonaDto) {
-    const persona = await this.repo.findById(id);
-    if (!persona) throw new AppError('Persona no encontrada', 404);
-    const updated = await this.repo.update(id, dto);
-    return updated;
-  }
-//eliminar persona logica (soft delete)
-  async eliminarPersona(id: number) {
-    const persona = await this.repo.findById(id);
-    if (!persona) throw new AppError('Persona no encontrada', 404);
-    await this.repo.softDelete(id);
-    return { success: true };
+
+  async actualizarPersona(id: number, dto: actualizarPersonaDto): Promise<PersonaEntity> {
+    // 1. Obtener entity existente
+    const personaExistente = await this.obtenerPersona(id);
+    
+    // 2. Crear nueva entity con los cambios
+    const personaActualizada = new PersonaEntity({
+      ...personaExistente,
+      nombre: dto.nombre ?? personaExistente.nombre,
+      apellido_paterno: dto.apellido_paterno ?? personaExistente.apellido_paterno,
+      apellido_materno: dto.apellido_materno ?? personaExistente.apellido_materno,
+      genero: dto.genero ?? personaExistente.genero,
+      foto_url: dto.foto_url ?? personaExistente.foto_url,
+      fecha_modificacion: new Date()
+    });
+
+    return this.personaRepository.actualizar(id, personaActualizada);
   }
 
-
+  async eliminarPersona(id: number): Promise<PersonaEntity> {
+    return this.personaRepository.eliminarSuavemente(id);
+  }
 }
